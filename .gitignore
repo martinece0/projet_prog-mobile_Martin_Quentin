@@ -1,0 +1,10 @@
+# PocketBase (Ne pas partager la DB locale ni l'exécutable)
+server/pb_data/
+server/pocketbase
+server/*.db*
+
+# Flutter
+app/.dart_tool/
+app/build/
+app/.packages
+app/*.lock
