@@ -44,3 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 !/.claude/
+
+# PocketBase data (ne pas envoyer la base de données locale)
+pb_data/
+*.db
