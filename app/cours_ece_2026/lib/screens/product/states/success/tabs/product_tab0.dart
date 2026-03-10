@@ -13,6 +13,7 @@ class ProductTab0 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Tab0 redevient un StatelessWidget car il n'affiche plus que les scores et les infos fixes
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -29,10 +30,11 @@ class ProductTab0 extends StatelessWidget {
   }
 }
 
+// --- LES SOUS-WIDGETS RESTENT IDENTIQUES ---
+
 class _Scores extends StatelessWidget {
   const _Scores();
-
-  static const double _horizontalPadding = ProductTab0._kHorizontalPadding;
+  static const double _horizontalPadding = 20.0;
   static const double _verticalPadding = 18.0;
 
   @override
@@ -61,8 +63,7 @@ class _Scores extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsetsDirectional.only(end: 5.0),
                         child: _Nutriscore(
-                          nutriscore:
-                              product.nutriScore ?? ProductNutriScore.unknown,
+                          nutriscore: product.nutriScore ?? ProductNutriScore.unknown,
                         ),
                       ),
                     ),
@@ -72,8 +73,7 @@ class _Scores extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsetsDirectional.only(start: 25.0),
                         child: _NovaGroup(
-                          novaScore:
-                              product.novaScore ?? ProductNovaScore.unknown,
+                          novaScore: product.novaScore ?? ProductNovaScore.unknown,
                         ),
                       ),
                     ),
@@ -100,7 +100,6 @@ class _Scores extends StatelessWidget {
 
 class _Nutriscore extends StatelessWidget {
   const _Nutriscore({required this.nutriscore});
-
   final ProductNutriScore nutriscore;
 
   @override
@@ -109,10 +108,7 @@ class _Nutriscore extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          AppLocalizations.of(context)!.nutriscore,
-          style: context.theme.title3,
-        ),
+        Text(AppLocalizations.of(context)!.nutriscore, style: context.theme.title3),
         const SizedBox(height: 5.0),
         Image.asset(_findAssetName(), height: 42.0),
       ],
@@ -126,14 +122,13 @@ class _Nutriscore extends StatelessWidget {
       ProductNutriScore.C => 'res/drawables/nutriscore_c.png',
       ProductNutriScore.D => 'res/drawables/nutriscore_d.png',
       ProductNutriScore.E => 'res/drawables/nutriscore_e.png',
-      ProductNutriScore.unknown => 'TODO',
+      ProductNutriScore.unknown => 'res/drawables/nutriscore_unknown.png',
     };
   }
 }
 
 class _NovaGroup extends StatelessWidget {
   const _NovaGroup({required this.novaScore});
-
   final ProductNovaScore novaScore;
 
   @override
@@ -142,10 +137,7 @@ class _NovaGroup extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          AppLocalizations.of(context)!.nova_group,
-          style: context.theme.title3,
-        ),
+        Text(AppLocalizations.of(context)!.nova_group, style: context.theme.title3),
         const SizedBox(height: 5.0),
         Text(_findLabel(), style: const TextStyle(color: AppColors.grey2)),
       ],
@@ -154,20 +146,17 @@ class _NovaGroup extends StatelessWidget {
 
   String _findLabel() {
     return switch (novaScore) {
-      ProductNovaScore.group1 =>
-        'Aliments non transformés ou transformés minimalement',
+      ProductNovaScore.group1 => 'Aliments non transformés',
       ProductNovaScore.group2 => 'Ingrédients culinaires transformés',
       ProductNovaScore.group3 => 'Aliments transformés',
-      ProductNovaScore.group4 =>
-        'Produits alimentaires et boissons ultra-transformés',
-      ProductNovaScore.unknown => 'Score non calculé',
+      ProductNovaScore.group4 => 'Produits ultra-transformés',
+      ProductNovaScore.unknown => 'Score inconnu',
     };
   }
 }
 
 class _GreenScore extends StatelessWidget {
   const _GreenScore({required this.greenScore});
-
   final ProductGreenScore greenScore;
 
   @override
@@ -176,21 +165,13 @@ class _GreenScore extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          AppLocalizations.of(context)!.greenscore,
-          style: context.theme.title3,
-        ),
+        Text(AppLocalizations.of(context)!.greenscore, style: context.theme.title3),
         const SizedBox(height: 5.0),
         Row(
           children: <Widget>[
             Icon(_findIcon(), color: _findIconColor()),
             const SizedBox(width: 10.0),
-            Expanded(
-              child: Text(
-                _findLabel(),
-                style: const TextStyle(color: AppColors.grey2),
-              ),
-            ),
+            Expanded(child: Text(_findLabel(), style: const TextStyle(color: AppColors.grey2))),
           ],
         ),
       ],
@@ -225,14 +206,12 @@ class _GreenScore extends StatelessWidget {
 
   String _findLabel() {
     return switch (greenScore) {
-      ProductGreenScore.APlus => 'Très faible impact environnemental',
-      ProductGreenScore.A => 'Très faible impact environnemental',
+      ProductGreenScore.APlus || ProductGreenScore.A => 'Très faible impact environnemental',
       ProductGreenScore.B => 'Faible impact environnemental',
-      ProductGreenScore.C => "Impact modéré sur l'environnement",
-      ProductGreenScore.D => 'Impact environnemental élevé',
-      ProductGreenScore.E => 'Impact environnemental très élevé',
-      ProductGreenScore.F => 'Impact environnemental très élevé',
-      ProductGreenScore.unknown => 'Score non calculé',
+      ProductGreenScore.C => "Impact modéré",
+      ProductGreenScore.D => 'Impact élevé',
+      ProductGreenScore.E || ProductGreenScore.F => 'Impact très élevé',
+      ProductGreenScore.unknown => 'Score inconnu',
     };
   }
 }
@@ -248,10 +227,7 @@ class _Info extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        _ProductItemValue(
-          label: localizations.product_quantity,
-          value: product.quantity ?? '-',
-        ),
+        _ProductItemValue(label: localizations.product_quantity, value: product.quantity ?? '-'),
         _ProductItemValue(
           label: localizations.product_countries,
           value: product.manufacturingCountries?.join(', ') ?? '-',
@@ -261,22 +237,16 @@ class _Info extends StatelessWidget {
         Row(
           children: <Widget>[
             Expanded(
-              flex: 40,
               child: _ProductBubble(
                 label: localizations.product_vegan,
-                value: product.isVegan == ProductAnalysis.yes
-                    ? _ProductBubbleValue.on
-                    : _ProductBubbleValue.off,
+                isOn: product.isVegan == ProductAnalysis.yes,
               ),
             ),
-            Spacer(flex: 10),
+            const SizedBox(width: 10),
             Expanded(
-              flex: 40,
               child: _ProductBubble(
                 label: localizations.product_vegetarian,
-                value: product.isVegetarian == ProductAnalysis.yes
-                    ? _ProductBubbleValue.on
-                    : _ProductBubbleValue.off,
+                isOn: product.isVegetarian == ProductAnalysis.yes,
               ),
             ),
           ],
@@ -287,12 +257,7 @@ class _Info extends StatelessWidget {
 }
 
 class _ProductItemValue extends StatelessWidget {
-  const _ProductItemValue({
-    required this.label,
-    required this.value,
-    this.includeDivider = true,
-  });
-
+  const _ProductItemValue({required this.label, required this.value, this.includeDivider = true});
   final String label;
   final String value;
   final bool includeDivider;
@@ -301,11 +266,11 @@ class _ProductItemValue extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
+      children: [
         Padding(
-          padding: const EdgeInsetsDirectional.symmetric(vertical: 12.0),
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
           child: Row(
-            children: <Widget>[
+            children: [
               Expanded(child: Text(label)),
               Expanded(child: Text(value, textAlign: TextAlign.end)),
             ],
@@ -318,39 +283,22 @@ class _ProductItemValue extends StatelessWidget {
 }
 
 class _ProductBubble extends StatelessWidget {
-  const _ProductBubble({required this.label, required this.value});
-
+  const _ProductBubble({required this.label, required this.isOn});
   final String label;
-  final _ProductBubbleValue value;
+  final bool isOn;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.blueLight,
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      padding: const EdgeInsetsDirectional.symmetric(
-        vertical: 10.0,
-        horizontal: 15.0,
-      ),
+      decoration: BoxDecoration(color: AppColors.blueLight, borderRadius: BorderRadius.circular(10.0)),
+      padding: const EdgeInsets.all(10.0),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(
-            value == _ProductBubbleValue.on
-                ? AppIcons.checkmark
-                : AppIcons.close,
-            color: AppColors.white,
-          ),
+        children: [
+          Icon(isOn ? AppIcons.checkmark : AppIcons.close, color: AppColors.white),
           const SizedBox(width: 10.0),
-          Expanded(
-            child: Text(label, style: const TextStyle(color: AppColors.white)),
-          ),
+          Expanded(child: Text(label, style: const TextStyle(color: AppColors.white))),
         ],
       ),
     );
   }
 }
-
-enum _ProductBubbleValue { on, off }

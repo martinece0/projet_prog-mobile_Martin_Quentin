@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:formation_flutter/l10n/app_localizations.dart';
 import 'package:formation_flutter/model/product.dart';
+import 'package:formation_flutter/model/product_recall.dart'; // Import du modèle de rappel
 import 'package:formation_flutter/res/app_icons.dart';
 import 'package:formation_flutter/screens/product/product_fetcher.dart';
 import 'package:formation_flutter/screens/product/states/success/product_header.dart';
@@ -9,6 +10,8 @@ import 'package:formation_flutter/screens/product/states/success/tabs/product_ta
 import 'package:formation_flutter/screens/product/states/success/tabs/product_tab2.dart';
 import 'package:formation_flutter/screens/product/states/success/tabs/product_tab3.dart';
 import 'package:provider/provider.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'package:go_router/go_router.dart';
 
 class ProductPageBody extends StatefulWidget {
   const ProductPageBody({super.key});
@@ -19,11 +22,38 @@ class ProductPageBody extends StatefulWidget {
 
 class _ProductPageBodyState extends State<ProductPageBody> {
   late ProductDetailsCurrentTab _tab;
+  ProductRecall? _recall; // Variable pour stocker le rappel s'il existe
 
   @override
   void initState() {
     super.initState();
     _tab = ProductDetailsCurrentTab.summary;
+    // On lance la vérification du rappel dès l'ouverture
+    _checkForRecall();
+  }
+
+  // Fonction pour interroger ta table 'rappels' sur PocketBase
+  Future<void> _checkForRecall() async {
+    // Récupération sécurisée du produit depuis le Fetcher
+    final state = context.read<ProductFetcher>().state;
+    if (state is! ProductFetcherSuccess) return;
+    final product = state.product;
+
+    final pb = PocketBase('http://macbook-air-de-martin.local:8090');
+
+    try {
+      final result = await pb.collection('rappels').getList(
+        filter: 'barcode = "${product.barcode}"',
+      );
+
+      if (result.items.isNotEmpty && mounted) {
+        setState(() {
+          _recall = ProductRecall.fromPocketBase(result.items.first.data);
+        });
+      }
+    } catch (e) {
+      debugPrint("Erreur lors de la récupération du rappel : $e");
+    }
   }
 
   @override
@@ -39,12 +69,17 @@ class _ProductPageBodyState extends State<ProductPageBody> {
           Expanded(
             child: CustomScrollView(
               slivers: <Widget>[
-                ProductPageHeader(),
+                const ProductPageHeader(),
+                
+                // --- AJOUT DU BANDEAU RAPPEL ICI (ENTRE HEADER ET TABS) ---
+                if (_recall != null)
+                  SliverToBoxAdapter(
+                    child: _RecallBanner(recall: _recall!),
+                  ),
+
                 SliverPadding(
-                  padding: EdgeInsetsDirectional.only(top: 10.0),
-                  sliver: SliverFillRemaining(
-                    fillOverscroll: true,
-                    hasScrollBody: false,
+                  padding: const EdgeInsetsDirectional.only(top: 10.0),
+                  sliver: SliverToBoxAdapter(
                     child: _getBody(),
                   ),
                 ),
@@ -56,6 +91,8 @@ class _ProductPageBodyState extends State<ProductPageBody> {
             onTap: (int position) => setState(
               () => _tab = ProductDetailsCurrentTab.values[position],
             ),
+            selectedItemColor: const Color(0xFF1D1D47),
+            unselectedItemColor: Colors.grey,
             items: ProductDetailsCurrentTab.values
                 .map(
                   (ProductDetailsCurrentTab tab) => BottomNavigationBarItem(
@@ -71,25 +108,50 @@ class _ProductPageBodyState extends State<ProductPageBody> {
   }
 
   Widget _getBody() {
-    return Stack(
-      children: <Widget>[
-        Offstage(
-          offstage: _tab != ProductDetailsCurrentTab.summary,
-          child: ProductTab0(),
+    return switch (_tab) {
+      ProductDetailsCurrentTab.summary => const ProductTab0(),
+      ProductDetailsCurrentTab.info => const ProductTab1(),
+      ProductDetailsCurrentTab.nutrition => const ProductTab2(),
+      ProductDetailsCurrentTab.nutritionalValues => const ProductTab3(),
+    };
+  }
+}
+
+// Widget interne pour le bandeau rose d'alerte
+class _RecallBanner extends StatelessWidget {
+  final ProductRecall recall;
+  const _RecallBanner({required this.recall});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: InkWell(
+        onTap: () => context.push('/recall', extra: recall),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFB2B2), // Rose clair
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFE63E11)),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  "Ce produit fait l'objet d'un rappel produit",
+                  style: TextStyle(
+                    color: Color(0xFFE63E11),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFFE63E11)),
+            ],
+          ),
         ),
-        Offstage(
-          offstage: _tab != ProductDetailsCurrentTab.info,
-          child: ProductTab1(),
-        ),
-        Offstage(
-          offstage: _tab != ProductDetailsCurrentTab.nutrition,
-          child: ProductTab2(),
-        ),
-        Offstage(
-          offstage: _tab != ProductDetailsCurrentTab.nutritionalValues,
-          child: ProductTab3(),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -107,9 +169,7 @@ enum ProductDetailsCurrentTab {
   String label(AppLocalizations appLocalizations) => switch (this) {
     ProductDetailsCurrentTab.summary => appLocalizations.product_tab_summary,
     ProductDetailsCurrentTab.info => appLocalizations.product_tab_properties,
-    ProductDetailsCurrentTab.nutrition =>
-      appLocalizations.product_tab_nutrition,
-    ProductDetailsCurrentTab.nutritionalValues =>
-      appLocalizations.product_tab_nutrition_facts,
+    ProductDetailsCurrentTab.nutrition => appLocalizations.product_tab_nutrition,
+    ProductDetailsCurrentTab.nutritionalValues => appLocalizations.product_tab_nutrition_facts,
   };
 }

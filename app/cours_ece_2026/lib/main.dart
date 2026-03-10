@@ -13,7 +13,10 @@ import 'package:formation_flutter/screens/product/product_page.dart';
 // Tes nouveaux fichiers
 import 'package:formation_flutter/services/auth_service.dart';
 import 'package:formation_flutter/screens/login/login_page.dart';
-import 'package:formation_flutter/screens/scanner/scanner_page.dart'; // Import du scanner
+import 'package:formation_flutter/screens/scanner/scanner_page.dart'; 
+import 'package:formation_flutter/screens/favorites/favorites_screen.dart';
+import 'package:formation_flutter/screens/product/product_recall_screen.dart'; // <--- AJOUTE CET IMPORT
+import 'package:formation_flutter/model/product_recall.dart'; // <--- ET CELUI-CI
 
 // 1. Initialisation globale
 final pb = PocketBase('http://macbook-air-de-martin.local:8090');
@@ -49,10 +52,17 @@ final GoRouter _router = GoRouter(
         return null;
       },
     ),
-    // NOUVELLE ROUTE : SCANNER
     GoRoute(
       path: '/scanner',
-      builder: (context, state) => ScannerPage(),
+      builder: (context, state) => const ScannerPage(),
+      redirect: (context, state) {
+        if (!authService.isAuthenticated) return '/login';
+        return null;
+      },
+    ),
+    GoRoute(
+      path: '/favorites',
+      builder: (context, state) => const FavoritesScreen(),
       redirect: (context, state) {
         if (!authService.isAuthenticated) return '/login';
         return null;
@@ -61,6 +71,15 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/product',
       builder: (context, state) => ProductPage(barcode: state.extra as String),
+      redirect: (context, state) {
+        if (!authService.isAuthenticated) return '/login';
+        return null;
+      },
+    ),
+    // --- NOUVELLE ROUTE : RAPPEL PRODUIT ---
+    GoRoute(
+      path: '/recall',
+      builder: (context, state) => ProductRecallScreen(recall: state.extra as ProductRecall),
       redirect: (context, state) {
         if (!authService.isAuthenticated) return '/login';
         return null;

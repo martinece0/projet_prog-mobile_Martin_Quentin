@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   pocketbase: ^0.18.0  
+  share_plus: ^10.1.4  # Vérifie la dernière version sur pub.dev
 
   flutter_localizations:
     sdk: flutter

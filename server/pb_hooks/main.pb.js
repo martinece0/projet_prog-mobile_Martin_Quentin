@@ -1,7 +1,9 @@
 /// <reference path="../pb_data/types.d.ts" />
 
+// Configuration du Cron : */2 * * * * = Toutes les 2 minutes
 cronAdd("sync_rappels", "0 8,20 * * *", () => {
-        try {
+    try {
+        // 1. Récupération du JSON
         const url = "https://codelabs.formation-flutter.fr/assets/rappels.json"
         const res = $http.send({
             url: url,
@@ -10,60 +12,63 @@ cronAdd("sync_rappels", "0 8,20 * * *", () => {
         })
 
         if (res.statusCode != 200) {
-            console.log("Error fetching data:", res.statusCode)
+            console.log("Erreur lors de la récupération du JSON :", res.statusCode)
             return
         }
 
-        const raw = res.json
-        let items = Array.isArray(raw) ? raw : (raw.list || raw.results || [])
-        
+        const items = res.json
         const collection = $app.findCollectionByNameOrId("rappels")
 
+        // 2. Traitement des données dans une transaction
         $app.runInTransaction((txApp) => {
             for (let item of items) {
-                const uniqueId = item.identification_produits
+                // On utilise numero_fiche comme identifiant unique pour éviter les doublons
+                const uniqueId = item.numero_fiche
                 if (!uniqueId) continue
 
                 let record
                 try {
-                    // On cherche si le produit existe déjà pour le mettre à jour
-                    record = txApp.findFirstRecordByData("rappels", "identification_produits", uniqueId)
+                    // On vérifie si ce rappel existe déjà en base
+                    record = txApp.findFirstRecordByData("rappels", "numero_fiche", uniqueId)
                 } catch (e) {
                     record = null
                 }
 
-                // S'il n'existe pas, on en crée un nouveau
+                // S'il n'existe pas, on crée un nouvel enregistrement
                 if (!record) {
                     record = new Record(collection)
                 }
 
-                // --- Mapping des champs ---
-                record.set("gtin", item.gtin ? String(item.gtin) : "")
-                record.set("numero_fiche", item.numero_fiche)
-                record.set("identification_produits", uniqueId)
-                record.set("libelle", item.libelle)
-                record.set("marque_produit", item.marque_produit)
-                record.set("motif_rappel", item.motif_rappel)
-                record.set("risques_encourus", item.risques_encourus)
-                record.set("conduites_a_tenir_par_le_consommateur", item.conduites_a_tenir_par_le_consommateur)
-                record.set("liens_vers_les_images", item.liens_vers_les_images)
-                record.set("lien_vers_affichette_pdf", item.lien_vers_affichette_pdf)
-                record.set("distributeurs", item.distributeurs)
-                record.set("zone_geographique_de_vente", item.zone_geographique_de_vente)
-                record.set("informations_complementaires", item.informations_complementaires)
-                record.set("rappel_guid", item.rappel_guid)
-                record.set("id_source", item.id)
+                // --- MAPPING CRITIQUE POUR FLUTTER ---
+                
+                // IMPORTANT : Conversion du GTIN (nombre dans le JSON) en String pour le champ barcode
+                if (item.gtin != null) {
+                    // On transforme le nombre en texte et on nettoie les espaces
+                    record.set("barcode", String(item.gtin).trim());
+                }
 
-                // Dates
-                if (item.date_publication) record.set("date_publication", item.date_publication)
-                if (item.date_debut_commercialisation) record.set("date_debut_commercialisation", item.date_debut_commercialisation + " 00:00:00.000Z")
-                if (item.date_date_fin_commercialisation) record.set("date_date_fin_commercialisation", item.date_date_fin_commercialisation + " 00:00:00.000Z")
+                // Mapping des autres champs selon ta structure PocketBase
+                record.set("nom_produit", item.libelle || item.modeles_ou_references || "Produit sans nom");
+                record.set("numero_fiche", uniqueId);
+                record.set("marque_produit", item.marque_produit);
+                record.set("motif_rappel", item.motif_rappel);
+                record.set("risques_encourus", item.risques_encourus);
+                record.set("distributeurs", item.distributeurs);
+                record.set("zone_geographique", item.zone_geographique_de_vente);
+                record.set("lien_pdf", item.lien_vers_affichette_pdf);
+                
+                // On prépare le texte des dates pour l'affichage simple
+                const dStart = item.date_debut_commercialisation || "?";
+                const dEnd = item.date_date_fin_commercialisation || "en cours";
+                record.set("dates_commercialisation", "Du " + dStart + " au " + dEnd);
 
-                txApp.save(record)
+                // Sauvegarde de l'enregistrement
+                txApp.save(record);
             }
         })
-        console.log("Synchro terminée : Données mises à jour (" + items.length + " items traités)")
+
+        console.log("[CRON SUCCESS] " + new Date().toLocaleTimeString() + " : " + items.length + " rappels synchronisés.");
     } catch (err) {
-        console.log("Cron error:", err)
+        console.log("[CRON ERROR] :", err);
     }
 })

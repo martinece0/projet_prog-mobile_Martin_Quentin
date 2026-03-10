@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:formation_flutter/model/product.dart';
 import 'package:formation_flutter/res/app_theme_extension.dart';
@@ -36,24 +35,15 @@ class ProductImageHeader extends StatelessWidget {
 }
 
 class _ProductHeaderDelegate extends SliverPersistentHeaderDelegate {
-  _ProductHeaderDelegate({required this.maxHeight, required this.minHeight})
-    : assert(maxHeight >= minHeight),
-      assert(minHeight >= 0.0);
+  _ProductHeaderDelegate({required this.maxHeight, required this.minHeight});
 
   final double maxHeight;
   final double minHeight;
 
   @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     final Product product = context.read<Product>();
-    final double progress = (shrinkOffset / (maxHeight - minHeight)).clamp(
-      0.0,
-      1.0,
-    );
+    final double progress = (shrinkOffset / (maxHeight - minHeight)).clamp(0.0, 1.0);
 
     return Stack(
       children: <Widget>[
@@ -66,7 +56,6 @@ class _ProductHeaderDelegate extends SliverPersistentHeaderDelegate {
             product.picture ?? '',
             width: double.infinity,
             fit: BoxFit.cover,
-            colorBlendMode: BlendMode.srcATop,
           ),
         ),
         PositionedDirectional(
@@ -80,15 +69,8 @@ class _ProductHeaderDelegate extends SliverPersistentHeaderDelegate {
               borderRadius: BorderRadiusDirectional.vertical(
                 top: Radius.circular(16.0 * (1 - progress)),
               ),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1 * (1.0 - progress)),
-                  blurRadius: 10.0,
-                  offset: const Offset(0.0, -2.0),
-                ),
-              ],
             ),
-            child: SizedBox(width: double.infinity, height: 16.0),
+            child: const SizedBox(width: double.infinity, height: 16.0),
           ),
         ),
       ],
@@ -97,13 +79,10 @@ class _ProductHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   double get maxExtent => maxHeight;
-
   @override
   double get minExtent => minHeight;
-
   @override
-  bool shouldRebuild(covariant _ProductHeaderDelegate oldDelegate) =>
-      maxHeight != oldDelegate.maxHeight || minHeight != oldDelegate.minHeight;
+  bool shouldRebuild(covariant _ProductHeaderDelegate oldDelegate) => true;
 }
 
 class ProductNameHeader extends StatelessWidget {
@@ -117,11 +96,12 @@ class ProductNameHeader extends StatelessWidget {
       child: Material(
         color: Colors.white,
         child: Padding(
-          padding: EdgeInsetsDirectional.only(start: 20.0, end: 20.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              // On affiche juste le nom ici, les boutons sont gérés par ProductPage
               Text(product.name ?? '-', style: context.theme.title1),
               const SizedBox(height: 3.0),
               Text(
